@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/shogo82148/go-mecab"
 	"github.com/shogo82148/ridgenative"
@@ -31,24 +33,75 @@ func NewServer() (*Server, error) {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	data, err := s.decode(r)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to decode", slog.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := w.Write(data); err != nil {
+		slog.ErrorContext(ctx, "failed to write response", slog.String("error", err.Error()))
+		panic(err)
+	}
+}
+
+func (s *Server) decode(r *http.Request) ([]byte, error) {
+	// read the request body
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	var input struct {
+		Query string `json:"query"`
+	}
+	if err := json.Unmarshal(data, &input); err != nil {
+		return nil, err
+	}
+
+	// parse the query
+	result, err := s.parse(input.Query)
+	if err != nil {
+		return nil, err
+	}
+
+	// encode the result
+	var output struct {
+		Result []string `json:"result"`
+	}
+	output.Result = result
+	return json.Marshal(&output)
+}
+
+func (s *Server) parse(query string) ([]string, error) {
 	lattice, err := mecab.NewLattice()
 	if err != nil {
-		slog.Error("failed to create lattice", slog.String("error", err.Error()))
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 	defer lattice.Destroy()
 
-	lattice.SetSentence("こんにちはせかい")
+	lattice.SetSentence(query)
+	lattice.AddRequestType(mecab.RequestTypeNBest)
 	if err := s.tagger.ParseLattice(lattice); err != nil {
-		slog.Error("failed to parse lattice", slog.String("error", err.Error()))
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
+		return nil, err
 	}
 
-	for node := lattice.BOSNode(); !node.IsZero(); node = node.Next() {
-		log.Println(node.Surface(), node.Feature())
+	result := make([]string, 0, 10)
+	for i := 0; i < 10; i++ {
+		var buf strings.Builder
+		for node := lattice.BOSNode(); !node.IsZero(); node = node.Next() {
+			if node.Stat() == mecab.NormalNode {
+				buf.WriteString(node.Feature())
+			}
+		}
+		result = append(result, buf.String())
+		if !lattice.Next() {
+			break
+		}
 	}
+	return result, nil
 }
 
 func main() {
