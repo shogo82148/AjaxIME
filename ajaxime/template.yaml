@@ -23,10 +23,9 @@ Resources:
         - x86_64
       Events:
         CatchAll:
-          Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
+          Type: HttpApi
           Properties:
-            Path: /ajaxime
-            Method: POST
+            ApiId: !Ref AjaxImeApi
       Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
         Variables:
           PARAM1: VALUE
@@ -35,13 +34,18 @@ Resources:
       DockerContext: ./ajaxime
       Dockerfile: Dockerfile
 
+  AjaxImeApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: API for AjaxIME
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   AjaxImeAPI:
     Description: API Gateway endpoint URL for Prod environment for First Function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/ajaxime/"
+    Value: !Sub "https://${AjaxImeApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
   AjaxImeFunction:
     Description: First Lambda Function ARN
     Value: !GetAtt AjaxImeFunction.Arn
