@@ -9,7 +9,7 @@ Description: >
 Globals:
   Function:
     Timeout: 5
-    MemorySize: 128
+    MemorySize: 512
 
     # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
     LoggingConfig:
