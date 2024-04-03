@@ -38,20 +38,6 @@ if (typeof getComputedStyle == "undefined") {
   //  getComputedStyle == __getComputedStyle;
 }
 
-function JSONRequest(url) {
-  this.url_ = url;
-  this.parent_ = document.getElementsByTagName("head").item(0);
-  this.obj_ = document.createElement("script");
-  this.obj_.setAttribute("type", "text/javascript");
-  this.obj_.setAttribute("charset", "utf-8");
-  this.obj_.setAttribute("src", this.url_);
-  this.parent_.appendChild(this.obj_);
-}
-
-JSONRequest.prototype.remove = function () {
-  this.parent_.removeChild(this.obj_);
-};
-
 function getEvent(evt) {
   return evt ? evt : window.event ? event : null;
 }
@@ -122,15 +108,13 @@ function cloneElement(elmOriginal, elmClone) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-var ImeCGI_ = "https://dwoovuc5nh.execute-api.ap-northeast-1.amazonaws.com/Prod/ajaxime";
+var ImeCGI_ = "https://o86ylqmnl3.execute-api.ap-northeast-1.amazonaws.com/Prod/";
 var ImeBackGroundColor_ = "aliceblue";
 var ImeID_ = 0;
 var ImeCache_ = [];
 var ImeCurrentDocument_ = null;
 
 function AjaxIME(doc) {
-  var ImeJsonp_ = null;
-  var ImeJsonpLog_ = null;
   var ImeDocument_ = doc;
   var ImeMode_ = null;
   var ImeResults_ = [];
@@ -456,16 +440,23 @@ function AjaxIME(doc) {
       if (ImeResults_.length) ImePreEdit_.value = ImeResults_[0];
       if (ImeRawInput_ == "") ImeRawInput_ = roma2hiragana(ImePreEdit_.value, false);
       ImeCandidates_.style.display = "block";
-      if (ImeJsonp_) ImeJsonp_.remove();
     } catch (e) {}
   }
 
   function ImeShowCandidates() {
     if (!ImeIsHidden()) return;
     if (ImeRawInput_ == "") ImeRawInput_ = roma2hiragana(ImePreEdit_.value, false);
-    var request = "action=conv&to=" + ImeTo_ + "&query=" + encodeURI(ImeRawInput_) + "&id=" + ImeID_;
+    const data = {
+      query: ImeRawInput_,
+    };
     ImeCurrentDocument_ = ImeDocument_;
-    ImeJsonp_ = new JSONRequest(ImeCGI_ + request);
+    fetch(ImeCGI_, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
   }
 
   function ImePreEditKeyDown(event) {
