@@ -36,6 +36,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Access-Control-Allow-Methods", "POST")
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Add("Access-Control-Max-Age", "86400")
 	if r.Method == http.MethodOptions {
 		// preflight request
 		w.WriteHeader(http.StatusOK)
