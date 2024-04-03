@@ -1,0 +1,54 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  ajaxime
+
+  Sample SAM Template for ajaxime
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 512
+
+    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
+    LoggingConfig:
+      LogFormat: JSON
+Resources:
+  AjaxImeFunction:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      PackageType: Image
+      Architectures:
+        - x86_64
+      Events:
+        CatchAll:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AjaxImeApi
+      Environment: # More info about Env Vars: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#environment-object
+        Variables:
+          PARAM1: VALUE
+    Metadata:
+      DockerTag: provided.al2023-v1
+      DockerContext: ./ajaxime
+      Dockerfile: Dockerfile
+
+  AjaxImeApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      Description: API for AjaxIME
+
+Outputs:
+  # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
+  # Find out more about other implicit resources you can reference within SAM
+  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+  AjaxImeAPI:
+    Description: API Gateway endpoint URL for Prod environment for First Function
+    Value: !Sub "https://${AjaxImeApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+  AjaxImeFunction:
+    Description: First Lambda Function ARN
+    Value: !GetAtt AjaxImeFunction.Arn
+  AjaxImeFunctionIamRole:
+    Description: Implicit IAM Role created for Hello World function
+    Value: !GetAtt AjaxImeFunction.Arn
