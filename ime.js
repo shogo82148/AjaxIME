@@ -456,6 +456,10 @@ function AjaxIME(doc) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(data),
+    }).then((response) => {
+      response.json().then((result) => {
+        ImeRequestCallback(result.result);
+      });
     });
   }
 
